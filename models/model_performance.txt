@@ -1,0 +1,39 @@
+SBA LOAN DEFAULT RISK PREDICTION MODEL
+Model Type: Random Forest
+Training Date: February 18, 2026
+Dataset: 100,000 loans (15,740 defaults)
+Features: 28 engineered features
+
+PERFORMANCE METRICS:
+Accuracy:  86.82%
+ROC AUC:   94.79%
+
+RANDOM FOREST RESULTS:
+Accuracy:  86.82%
+Precision: 55.16%
+Recall:    86.94%
+F1 Score:  67.50%
+ROC AUC:   94.79%
+
+CONFUSION MATRIX:
+True Negatives:  14,627
+False Positives: 2,225
+False Negatives: 411
+True Positives:  2,737
+
+TOP 15 FEATURES:
+term_val                     : 0.6038
+short_term                   : 0.0936
+amount                       : 0.0393
+amount_per_job_created       : 0.0318
+jobs_retained                : 0.0318
+long_term                    : 0.0314
+sector_num                   : 0.0259
+is_franchise                 : 0.0251
+amount_per_employee          : 0.0234
+urban                        : 0.0226
+employees                    : 0.0162
+jobs_created                 : 0.0106
+has_revline                  : 0.0105
+is_lowdoc                    : 0.0101
+rural                        : 0.0070

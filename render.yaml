@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: sba-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn dashboard:server --bind 0.0.0.0:$PORT
+    plan: free
