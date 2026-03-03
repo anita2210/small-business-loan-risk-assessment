@@ -27,7 +27,7 @@ app.index_string = '''
         <style>
             .custom-input {
                 width: 100% !important;
-                padding: 16px 20px !important;
+                padding: 0px 20px !important;
                 font-size: 22px !important;
                 font-weight: 700 !important;
                 border: 3px solid #d1d5db !important;
@@ -417,6 +417,6 @@ def predict_risk(n_clicks, amount, term, sector, state, biz_type, employees, job
             ], style={'margin': '0', 'fontSize': '14px', 'color': '#475569'})
         ])
     ])
-
+server = app.server
 if __name__ == '__main__':
     app.run(debug=True, port=8051)
