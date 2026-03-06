@@ -147,8 +147,8 @@ X_test_scaled = scaler.transform(X_test)
 
 # Train BOTH models
 lr_model = LogisticRegression(max_iter=1000, random_state=42, solver='lbfgs', class_weight='balanced')
+print("fitting logistic regression")
 lr_model.fit(X_train_scaled, y_train)
-print("fitting random forest")
 rf_model = RandomForestClassifier(
     n_estimators=100,
     max_depth=15,
@@ -158,8 +158,8 @@ rf_model = RandomForestClassifier(
     class_weight='balanced',
     n_jobs=-1
 )
+print("fitting Random Forest...")
 rf_model.fit(X_train, y_train)  # Note: Random Forest doesn't need scaling
-print("fitting logistic regression")
 
 # Evaluate BOTH
 
@@ -179,7 +179,6 @@ print(f"F1 Score:  {lr_f1*100:.2f}%")
 print(f"ROC AUC:   {lr_auc*100:.2f}%")
 print("\nlogistic regression:")
 print(f"  acc={lr_acc:.3f}  auc={lr_auc:.3f}")
-
 
 rf_pred = rf_model.predict(X_test)
 rf_proba = rf_model.predict_proba(X_test)[:, 1]

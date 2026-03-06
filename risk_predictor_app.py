@@ -258,11 +258,7 @@ def predict_risk(n_clicks, amount, term, sector, state, biz_type, employees, job
     else:
         jobs = int(jobs)
     
-    try:
-        risk_probability = float(model.predict_proba(input_df)[0][1] * 100)
-    except Exception as e:
-        print(f"prediction error: {e}")
-        risk_probability = 0.0
+
     features_dict = {
         'amount': amount,
         'term_val': term,
