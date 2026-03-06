@@ -156,6 +156,12 @@ app.layout = html.Div(style={
                           style={'fontWeight': '700', 'marginBottom': '12px', 'display': 'block', 'color': '#374151', 'fontSize': '17px'}),
                 dcc.Input(id='jobs', type='number', value=5, min=0, className='custom-input')
             ]),
+            html.Div(style={'marginBottom': '30px'}, children=[
+            html.Label('Jobs to Retain',
+                       style={'fontWeight': '700', 'marginBottom': '12px',
+                              'display': 'block', 'color': '#374151', 'fontSize': '17px'}),
+                              dcc.Input(id='jobs-retained', type='number',value=5, min=0, className='custom-input')]),
+            
             
             html.Div(style={'marginBottom': '30px'}, children=[
                 html.Label('📍 Location', 
@@ -209,7 +215,7 @@ app.layout = html.Div(style={
     ]),
     
     html.Div(style={'textAlign': 'center', 'marginTop': '40px', 'color': 'white'}, children=[
-        html.P('🚀 ML-Powered Risk Assessment | Anita Chelladurai',
+        html.P('ML-Powered Risk Assessment | Anita Chelladurai',
                style={'fontSize': '15px', 'opacity': '0.95'})
     ])
 ])
@@ -224,11 +230,12 @@ app.layout = html.Div(style={
      State('business-type', 'value'),
      State('employees', 'value'),
      State('jobs', 'value'),
+     State('jobs-retained', 'value'),
      State('location', 'value'),
      State('loan-flags', 'value')],
     prevent_initial_call=True
 )
-def predict_risk(n_clicks, amount, term, sector, state, biz_type, employees, jobs, location, flags):
+def predict_risk(n_clicks, amount, term, sector, state, biz_type, employees, jobs, jobs_retained, location, flags):
     
     # FIX: Proper conversion - handle None and empty values
     if amount is None or amount == '':
@@ -251,14 +258,17 @@ def predict_risk(n_clicks, amount, term, sector, state, biz_type, employees, job
     else:
         jobs = int(jobs)
     
-    print(f"DEBUG: amount={amount}, term={term}, employees={employees}, jobs={jobs}")  # Debug output
-    
+    try:
+        risk_probability = float(model.predict_proba(input_df)[0][1] * 100)
+    except Exception as e:
+        print(f"prediction error: {e}")
+        risk_probability = 0.0
     features_dict = {
         'amount': amount,
         'term_val': term,
         'employees': employees,
         'jobs_created': jobs,
-        'jobs_retained': 0,
+        'jobs_retained': int(jobs_retained) if jobs_retained else 0,
         'is_new': 1 if biz_type == 'new' else 0,
         'is_established': 1 if biz_type == 'established' else 0,
         'is_recent': 1 if biz_type == 'recent' else 0,

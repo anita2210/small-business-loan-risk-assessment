@@ -7,24 +7,22 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix, classification_report
 import pickle
 
-print("Libraries imported!\n")
-
 # Load data
-print("[1/8] Loading data...")
 loans = pd.read_csv('../data/loans_sample.csv')
-print(f"✓ Loaded {len(loans):,} loans\n")
+print(f"loaded {len(loans)} rows")
 
 # Create target
-print("[2/8] Creating target variable...")
+# DEFAULT DEFINITION (consistent across all files):
+# is_default = 1 if chgoffdate has an actual date value
+# is_default = 0 if chgoffdate is NULL, empty string, or 'N' (not charged off)
+# This matches the SQL definition in analysis_queries.sql
 loans['is_default'] = loans['chgoffdate'].apply(
-    lambda x: 0 if (pd.isna(x) or str(x) in ['N', '']) else 1
+    lambda x: 0 if (pd.isna(x) or str(x).strip() in ['N', '']) else 1
 )
 defaults = loans['is_default'].sum()
-print(f"✓ Defaults: {defaults:,} ({defaults/len(loans)*100:.1f}%)\n")
+print(f"defaults: {defaults} ({defaults/len(loans)*100:.1f}%)")
 
 # ENHANCED FEATURE ENGINEERING
-print("[3/8] Engineering features (ENHANCED)...")
-
 # Sector features
 loans['sector'] = loans['naics'].astype(str).str[:2]
 loans['sector_num'] = pd.to_numeric(loans['sector'], errors='coerce').fillna(0)
@@ -86,7 +84,12 @@ loans['large_loan'] = loans['amount'].apply(lambda x: 1 if x >= 250000 else 0)
 # Term categories
 loans['short_term'] = loans['term_val'].apply(lambda x: 1 if x < 120 else 0)
 loans['long_term'] = loans['term_val'].apply(lambda x: 1 if x >= 240 else 0)
-
+print("\n--- TERM_VAL INVESTIGATION ---")
+print("Default rate by short_term flag:")
+print(loans.groupby('short_term')['is_default'].mean())
+print("\nDefault rate by long_term flag:")
+print(loans.groupby('long_term')['is_default'].mean())
+print(f"\nCorrelation between term_val and is_default: {loans['term_val'].corr(loans['is_default']):.4f}")
 # Geographic risk
 high_risk_states = ['DC', 'FL', 'GA', 'NV', 'MD']
 medium_risk_states = ['IL', 'NY', 'WV', 'MI', 'OH']
@@ -105,7 +108,6 @@ loans['triple_risk'] = loans.apply(
     lambda r: 1 if (r['is_new'] == 1 and r['sector_high_risk'] == 1 and r['state_high_risk'] == 1) else 0, axis=1
 )
 
-print("✓ 30+ features engineered!\n")
 
 # Feature list
 features = [
@@ -119,9 +121,8 @@ features = [
     'amount_per_employee', 'amount_per_job_created',
     'double_risk', 'triple_risk'
 ]
-
+print(f"features ready: {len(features)}")
 # Prepare
-print("[4/8] Preparing dataset...")
 df = loans[features + ['is_default']].copy()
 df = df.fillna(0)
 df = df.replace([np.inf, -np.inf], 0)
@@ -132,28 +133,22 @@ df['amount_per_job_created'] = df['amount_per_job_created'].clip(upper=df['amoun
 
 X = df[features]
 y = df['is_default']
-print(f" Dataset: {len(df):,} records with {len(features)} features\n")
+print(f"dataset shape: {df.shape}")
 
 # Split
-print("[5/8] Splitting data...")
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-print(f" Train: {len(X_train):,} | Test: {len(X_test):,}\n")
+print(f"train: {len(X_train)}  test: {len(X_test)}")
 
 # Scale
-print("[6/8] Scaling features...")
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
-print(" Scaled!\n")
+
 
 # Train BOTH models
-print("[7/8] Training models...")
-print("Training Logistic Regression...")
 lr_model = LogisticRegression(max_iter=1000, random_state=42, solver='lbfgs', class_weight='balanced')
 lr_model.fit(X_train_scaled, y_train)
-print(" Logistic Regression trained!")
-
-print("\nTraining Random Forest (this takes 1-2 minutes)...")
+print("fitting random forest")
 rf_model = RandomForestClassifier(
     n_estimators=100,
     max_depth=15,
@@ -164,12 +159,9 @@ rf_model = RandomForestClassifier(
     n_jobs=-1
 )
 rf_model.fit(X_train, y_train)  # Note: Random Forest doesn't need scaling
-print(" Random Forest trained!\n")
+print("fitting logistic regression")
 
 # Evaluate BOTH
-print("[8/8] Evaluating models...")
-print("LOGISTIC REGRESSION PERFORMANCE")
-
 
 lr_pred = lr_model.predict(X_test_scaled)
 lr_proba = lr_model.predict_proba(X_test_scaled)[:, 1]
@@ -185,8 +177,8 @@ print(f"Precision: {lr_prec*100:.2f}%")
 print(f"Recall:    {lr_rec*100:.2f}%")
 print(f"F1 Score:  {lr_f1*100:.2f}%")
 print(f"ROC AUC:   {lr_auc*100:.2f}%")
-
-print("RANDOM FOREST PERFORMANCE")
+print("\nlogistic regression:")
+print(f"  acc={lr_acc:.3f}  auc={lr_auc:.3f}")
 
 
 rf_pred = rf_model.predict(X_test)
@@ -201,12 +193,6 @@ rf_auc = roc_auc_score(y_test, rf_proba)
 cm = confusion_matrix(y_test, rf_pred)
 tn, fp, fn, tp = cm.ravel()
 
-print(f"Accuracy:  {rf_acc*100:.2f}% ⭐")
-print(f"Precision: {rf_prec*100:.2f}%")
-print(f"Recall:    {rf_rec*100:.2f}%")
-print(f"F1 Score:  {rf_f1*100:.2f}%")
-print(f"ROC AUC:   {rf_auc*100:.2f}% ⭐")
-
 print("\nConfusion Matrix:")
 print(f"  Correct Non-Defaults: {tn:,}")
 print(f"  False Alarms:         {fp:,}")
@@ -214,35 +200,26 @@ print(f"  Missed Defaults:      {fn:,}")
 print(f"  Correct Defaults:     {tp:,}")
 
 
-print(f" WINNER: {'Random Forest' if rf_acc > lr_acc else 'Logistic Regression'}")
-print(f"   Accuracy improved by {abs(rf_acc - lr_acc)*100:.1f} percentage points!")
-
 # Feature importance (Random Forest)
-print("\nTOP 15 MOST IMPORTANT FEATURES (Random Forest):")
 feature_importance = pd.DataFrame({
     'feature': features,
     'importance': rf_model.feature_importances_
 }).sort_values('importance', ascending=False)
 
+print("\nfeature importances (top 15):")
 for i, row in feature_importance.head(15).iterrows():
-    bar_length = int(row['importance'] * 50)
-    bar = '█' * bar_length
-    print(f"{row['feature']:28s} {bar} {row['importance']:.4f}")
-
+    print(f"  {row['feature']:<28} {row['importance']:.4f}")
 # Save BEST model
 best_model = rf_model if rf_acc > lr_acc else lr_model
 best_model_name = "Random Forest" if rf_acc > lr_acc else "Logistic Regression"
 best_acc = rf_acc if rf_acc > lr_acc else lr_acc
 best_auc = rf_auc if rf_acc > lr_acc else lr_auc
-
-print(f"\n[SAVING] Saving {best_model_name} model...")
 with open('trained_model.pkl', 'wb') as f:
     pickle.dump(best_model, f)
 with open('scaler.pkl', 'wb') as f:
     pickle.dump(scaler, f)
 with open('feature_list.pkl', 'wb') as f:
     pickle.dump(features, f)
-
 # Save performance
 with open('model_performance.txt', 'w') as f:
     f.write("SBA LOAN DEFAULT RISK PREDICTION MODEL\n")
@@ -279,29 +256,11 @@ with open('model_performance.txt', 'w') as f:
     for i, row in feature_importance.head(15).iterrows():
         f.write(f"{row['feature']:28s} : {row['importance']:.4f}\n")
 
-print(f" {best_model_name} model saved!")
-print(" Performance report saved!\n")
+print("model saved to models/")
 
 # Business insights
-print("KEY INSIGHTS FROM MODEL")
-
-print("\n STRONGEST DEFAULT PREDICTORS:")
-top_5 = feature_importance.head(5)
-for i, row in top_5.iterrows():
-    print(f"  {i+1}. {row['feature']}")
-
-print(f"\n BUSINESS RECOMMENDATION:")
-if 'is_new' in top_5['feature'].values:
-    print("    New businesses are a major risk factor - require extra scrutiny!")
-if 'state_high_risk' in top_5['feature'].values:
-    print("    Geographic location matters - adjust pricing by state!")
-if 'sector_high_risk' in top_5['feature'].values:
-    print("    Industry sector is critical - avoid high-risk sectors!")
-if 'amount' in top_5['feature'].values:
-    print("    Loan size impacts risk - don't assume small = safe!")
-
-
-print(" MODEL TRAINING COMPLETE!")
-print(f"\n Final Accuracy: {best_acc*100:.2f}%")
-print(f" ROC AUC Score: {best_auc*100:.2f}%")
-print("\n Ready to integrate into dashboard!")
+# top features
+print("\ntop 5 features:")
+for rank, (i, row) in enumerate(feature_importance.head(5).iterrows(), 1):
+    print(f"  {rank}. {row['feature']} ({row['importance']:.4f})")
+print(f"\nbest model: {'rf' if rf_acc > lr_acc else 'lr'}  acc={best_acc:.3f}  auc={best_auc:.3f}")

@@ -421,7 +421,7 @@ def build_main_page():
                        'borderRadius': '14px', 'padding': '30px', 'textAlign': 'center',
                        'boxShadow': '0 8px 25px rgba(0,0,0,0.3)',
                        'border': '2px solid rgba(139,92,246,0.2)'}, children=[
-            html.P('🚀 Interactive Dashboard | Python + Dash + Plotly | AWS Pipeline | 👩‍💻 Anita Chelladurai',
+            html.P('SBA Loan Risk Analysis | Anita Chelladurai',
                    style={'color': '#64748b', 'margin': '0', 'fontSize': '15px', 'fontWeight': '600'})
         ])
     ])
