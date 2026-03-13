@@ -99,9 +99,9 @@ FROM raw_data
 WHERE disbursementgross IS NOT NULL
 GROUP BY CASE 
         WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) < 50000 THEN 'Under $50K'
-        WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) < 100000 THEN '$50K-$100K'
-        WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) < 250000 THEN '$100K-$250K'
-        WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) < 500000 THEN '$250K-$500K'
+        WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) >= 100000 THEN '$50K-$100K'
+        WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) >= 250000 THEN '$100K-$250K'
+        WHEN TRY_CAST(REPLACE(REPLACE(REPLACE(disbursementgross, '$', ''), ',', ''), '"', '') AS DOUBLE) >= 500000 THEN '$250K-$500K'
         ELSE 'Over $500K'
     END
 ORDER BY default_rate_percent DESC;
