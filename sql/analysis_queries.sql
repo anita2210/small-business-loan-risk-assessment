@@ -42,10 +42,18 @@ SELECT
     ROUND(100.0 * SUM(CASE WHEN chgoffdate IS NULL OR chgoffdate = '' OR chgoffdate = 'N' THEN 0 ELSE 1 END) / COUNT(*), 2) as default_rate_percent
 FROM raw_data
 WHERE state IS NOT NULL
+  AND LENGTH(state) = 2
+  AND state NOT LIKE '%"%'
+  AND state NOT LIKE '% %'
+  AND state IN ('AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 
+                'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+                'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+                'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+                'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC')
 GROUP BY state
-HAVING COUNT(*) > 1000
+HAVING COUNT(*) > 500
 ORDER BY default_rate_percent DESC
-LIMIT 15;
+LIMIT 20;
 
 -- Key Finding: DC (28.52%), FL (25.05%), GA (22.74%) have highest default rates
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
